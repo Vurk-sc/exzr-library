@@ -548,27 +548,44 @@ local function createTracer(uid)
     })
 end
 
+-- 1. Configuration Variable
+local TargetBoneMode = "Torso" -- Can be "Torso" or "Head"
+
+-- 2. Updated Registration Function
 local function checkAndRegisterModel(model)
     if not model:IsA("Model") then return end
     
-    local nameTagGui = model:FindFirstChild("NameTagGui", true)
-    if nameTagGui then
-        local tag = model:FindFirstChild("PlayerTag", true)
-        if tag and tag:IsA("TextLabel") and tag.TextColor3 == Color3.fromRGB(255, 10, 20) then
-            local basepart = model:FindFirstChild("Torso", true) 
-                or model:FindFirstChild("Head", true) 
-                or model:FindFirstChild("HumanoidRootPart", true) 
-                or model:FindFirstChildWhichIsA("BasePart", true)
-            
-            if basepart then
-                EnemyModels[model:GetDebugId()] = {
-                    Model = model,
-                    Anchor = basepart
-                }
-            end
+    -- Ensure we only target enemies based on your existing tag check
+    local tag = model:FindFirstChild("PlayerTag", true)
+    if tag and tag:IsA("TextLabel") and tag.TextColor3 == Color3.fromRGB(255, 10, 20) then
+        
+        -- Logic: If 'Head' is selected, look for Head first; otherwise prioritize Torso
+        local targetPart = nil
+        if TargetBoneMode == "Head" then
+            targetPart = model:FindFirstChild("Head", true) or model:FindFirstChild("Torso", true)
+        else
+            targetPart = model:FindFirstChild("Torso", true) or model:FindFirstChild("Head", true)
+        end
+        
+        if targetPart then
+            EnemyModels[model:GetDebugId()] = {
+                Model = model,
+                Anchor = targetPart
+            }
         end
     end
 end
+
+-- 3. UI Toggle Implementation
+MyUI:AddToggle("Prioritize Head (Off=Torso)", false, function(state)
+    TargetBoneMode = state and "Head" or "Torso"
+    
+    -- CRITICAL: Clear existing models to force an immediate re-scan
+    -- This makes the switch instantaneous instead of waiting for a new respawn
+    table.clear(EnemyModels) 
+    
+    print("Aimlock now targeting: " .. TargetBoneMode)
+end)
 
 local function updateVisuals()
     for _, box in pairs(ActiveBoxes) do
