@@ -135,7 +135,7 @@ function UILibrary.CreateWindow(titleText)
     local W, H = 420, 430
  
     local SG = Instance.new("ScreenGui")
-    SG.Name           = "VanguardUI_" .. math.random(1000, 9999)
+    SG.Name           = "VanguardUI_"
     SG.ResetOnSpawn   = false
     SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     SG.DisplayOrder   = 999
