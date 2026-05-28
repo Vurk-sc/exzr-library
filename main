@@ -578,9 +578,9 @@ end
 
 -- 3. UI Toggle Implementation
 MyUI:AddToggle("Prioritize Head", false, function(state)
-    getgenv().TargetBoneMode = state and "Head" or "Torso"
-    EnemyModels = {} -- Force re-scan
-    print("New Target Mode: " .. getgenv().TargetBoneMode)
+    TargetBoneMode = state and "Head" or "Torso"
+    EnemyModels = {} -- Clears the cache to force an immediate re-scan
+    print("Aimlock now targeting: " .. TargetBoneMode)
 end)
 
 local function updateVisuals()
