@@ -170,8 +170,8 @@ function UILibrary.CreateWindow(titleText)
     end
 
     -- TOGGLE Component
-    function Elements:AddToggle(text, callback)
-        local toggled = false
+   function Elements:AddToggle(text, defaultState, callback)
+    local toggled = defaultState or false
 
         local ToggleFrame = Instance.new("TextButton")
         ToggleFrame.Size = UDim2.new(1, -6, 0, 35)
@@ -216,10 +216,13 @@ function UILibrary.CreateWindow(titleText)
         SCorner.Parent = SwitchNode
 
         ToggleFrame.MouseButton1Down:Connect(function()
+            if toggled then
+                IndicatorBox.BackgroundColor3 = Color3.fromRGB(0, 160, 255)
+                SwitchNode.Position = UDim2.new(1, -16, 0.5, -7)
+            end
+
+        ToggleFrame.MouseButton1Down:Connect(function()
             toggled = not toggled
-            local targetPos = toggled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
-            local targetColor = toggled and Color3.fromRGB(0, 160, 255) or Color3.fromRGB(24, 24, 28)
-            local nodeColor = toggled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(140, 140, 145)
 
             TweenService:Create(SwitchNode, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Position = targetPos, BackgroundColor3 = nodeColor}):Play()
             TweenService:Create(IndicatorBox, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
