@@ -1,0 +1,311 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+
+local currentTargetPartName = "Right Leg"
+local FOV_RADIUS = 150 
+local FOV_COLOR = Color3.fromRGB(255, 255, 255)
+local FOV_THICKNESS = 1.5
+local FIRING_DELAY = 0.1 
+
+
+local MAX_AMMO = 30 
+local RELOAD_TIME = 2.5 
+
+
+local WallCheckEnabled = true
+local EspEnabled = true -- Toggle control for the ESP overlay
+
+local lastShotTime = 0
+local currentAmmo = MAX_AMMO
+local isReloading = false
+local lockedPlayer = nil 
+local scriptConnections = {}
+local targetUiGuiInstance = nil 
+local espBoxes = {} -- Stores Drawing structures for memory caching
+
+
+local fovCircle = Drawing.new("Circle")
+fovCircle.Thickness = FOV_THICKNESS
+fovCircle.Color = FOV_COLOR
+fovCircle.Radius = FOV_RADIUS
+fovCircle.Filled = false
+fovCircle.Visible = true
+
+local R6_BODY_PARTS = {
+    [1] = "Head",
+    [2] = "Torso",
+    [3] = "Left Arm",
+    [4] = "Right Arm",
+    [5] = "Left Leg",
+    [6] = "Right Leg"
+}
+
+
+local function hasClearLineOfSight(origin, targetPart, targetCharacter)
+    if not WallCheckEnabled then 
+        return true 
+    end
+
+    local direction = targetPart.Position - origin
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    raycastParams.FilterDescendantsInstances = {localPlayer.Character, targetCharacter, camera}
+    raycastParams.IgnoreWater = true
+    
+    local raycastResult = workspace:Raycast(origin, direction, raycastParams)
+    return raycastResult == nil
+end
+
+
+local function isValidTarget(player, mouseLocation, localRootPos)
+    if not player or player == localPlayer or not player.Character then return false, nil, 0 end
+    
+    local character = player.Character
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local root = character:FindFirstChild("HumanoidRootPart")
+    local targetLimb = character:FindFirstChild(currentTargetPartName)
+    
+    if humanoid and humanoid.Health > 0 and root and targetLimb then
+        local screenPos, onScreen = camera:WorldToViewportPoint(targetLimb.Position)
+        if onScreen then
+            local screenPoint = Vector2.new(screenPos.X, screenPos.Y)
+            local mouseToTargetDistance = (screenPoint - mouseLocation).Magnitude
+            
+            if mouseToTargetDistance <= FOV_RADIUS then
+                if hasClearLineOfSight(localRootPos, targetLimb, character) then
+                    local worldDistance = (targetLimb.Position - localRootPos).Magnitude
+                    return true, targetLimb, worldDistance
+                end
+            end
+        end
+    end
+    return false, nil, 0
+end
+
+
+local function getOrCreateEspBox(player)
+    if espBoxes[player] then return espBoxes[player] end
+    
+    local box = Drawing.new("Square")
+    box.Thickness = 1.5
+    box.Filled = false
+    box.Visible = false
+    
+    espBoxes[player] = box
+    return box
+end
+
+
+local automationLoop = RunService.RenderStepped:Connect(function()
+    local mouseLocation = UserInputService:GetMouseLocation()
+    fovCircle.Position = mouseLocation
+    
+    local character = localPlayer.Character
+    local localRoot = character and character:FindFirstChild("HumanoidRootPart")
+    local localRootPos = localRoot and localRoot.Position or Vector3.zero
+    
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        local box = getOrCreateEspBox(player)
+        local visibleThisFrame = false
+        
+        if EspEnabled and player ~= localPlayer and player.Character and localRoot then
+            local pChar = player.Character
+            local root = pChar:FindFirstChild("HumanoidRootPart")
+            local humanoid = pChar:FindFirstChildOfClass("Humanoid")
+            
+            if root and humanoid and humanoid.Health > 0 then
+                local rootPos, onScreen = camera:WorldToViewportPoint(root.Position)
+                
+                if onScreen then
+
+                    local camDistance = (camera.CFrame.Position - root.Position).Magnitude
+                    local boxHeight = math.clamp((1000 / camDistance) * 3, 10, 500)
+                    local boxWidth = boxHeight * 0.65
+                    
+                    box.Size = Vector2.new(boxWidth, boxHeight)
+                    box.Position = Vector2.new(rootPos.X - (boxWidth / 2), rootPos.Y - (boxHeight / 2))
+                    
+
+                    if WallCheckEnabled then
+                        local head = pChar:FindFirstChild("Head") or root
+                        if hasClearLineOfSight(localRootPos, head, pChar) then
+                            box.Color = Color3.fromRGB(0, 255, 100) -- Target Exposed
+                        else
+                            box.Color = Color3.fromRGB(255, 50, 50) -- Target Obstructed
+                        end
+                    else
+                        box.Color = Color3.fromRGB(0, 160, 255) -- Neutral Blue fallback
+                    end
+                    
+                    visibleThisFrame = true
+                end
+            end
+        end
+        box.Visible = visibleThisFrame
+    end
+    
+
+    if isReloading or not character then return end
+    
+    local currentTime = os.clock()
+    if currentTime - lastShotTime < FIRING_DELAY then return end
+    
+    local weapon = character:FindFirstChild("AK-47") or localPlayer.Backpack:FindFirstChild("AK-47")
+    if not weapon then return end
+    
+    local fireWeaponRemote = weapon:FindFirstChild("FireWeapon")
+    local gunHitRemote = weapon:FindFirstChild("GunHit")
+    local reloadGunRemote = weapon:FindFirstChild("ReloadGun")
+    if not (fireWeaponRemote and gunHitRemote) then return end
+    
+    if currentAmmo <= 0 then
+        if reloadGunRemote then
+            isReloading = true
+            reloadGunRemote:FireServer()
+            
+            task.delay(RELOAD_TIME, function()
+                currentAmmo = MAX_AMMO
+                isReloading = false
+            end)
+        end
+        return
+    end
+    
+    if not localRoot then return end
+
+    local targetPart = nil
+    local exactDistance = 0
+    
+    if lockedPlayer then
+        local valid, limb, dist = isValidTarget(lockedPlayer, mouseLocation, localRootPos)
+        if valid then
+            targetPart = limb
+            exactDistance = dist
+        else
+            lockedPlayer = nil 
+        end
+    end
+    
+    if not lockedPlayer then
+        local shortestDistance = math.huge
+        
+        for _, player in ipairs(Players:GetPlayers()) do
+            local valid, limb, dist = isValidTarget(player, mouseLocation, localRootPos)
+            if valid and dist < shortestDistance then
+                shortestDistance = dist
+                lockedPlayer = player
+                targetPart = limb
+                exactDistance = dist
+            end
+        end
+    end
+    
+    if targetPart then
+        lastShotTime = currentTime
+        currentAmmo = currentAmmo - 1
+        
+        fireWeaponRemote:FireServer(currentTime)
+        
+        local hitPayload = {
+            {
+                Normal = Vector3.yAxis,
+                Position = targetPart.Position,
+                Instance = targetPart,
+                Material = Enum.Material.Plastic,
+                Distance = exactDistance
+            }
+        }
+        
+        gunHitRemote:FireServer(currentTime, hitPayload)
+    end
+end)
+table.insert(scriptConnections, automationLoop)
+
+
+local playerRemovingConnection = Players.PlayerRemoving:Connect(function(player)
+    if espBoxes[player] then
+        espBoxes[player]:Remove()
+        espBoxes[player] = nil
+    end
+end)
+table.insert(scriptConnections, playerRemovingConnection)
+
+
+local function createInterface()
+    local uiStorageParent = (gethui and gethui()) or game:GetService("CoreGui")
+    
+    local itemTrackingConnection
+    itemTrackingConnection = uiStorageParent.ChildAdded:Connect(function(child)
+        if child:IsA("ScreenGui") and string.match(child.Name, "^CustomUILibrary_") then
+            targetUiGuiInstance = child
+            itemTrackingConnection:Disconnect()
+        end
+    end)
+
+    local UILibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/Vurk-sc/exzr-library/refs/heads/main/uiLib"))()
+    local Elements = UILibrary.CreateWindow("main")
+    
+    Elements:AddLabel("Visual stuff")
+    
+
+    Elements:AddToggle("Activate Box ESP", true, function(stateValue)
+        EspEnabled = stateValue
+        if not stateValue then
+            for _, box in pairs(espBoxes) do
+                box.Visible = false
+            end
+        end
+    end)
+    
+    Elements:AddLabel("config")
+    
+    Elements:AddToggle("Visual Check", true, function(stateValue)
+        WallCheckEnabled = stateValue
+        lockedPlayer = nil 
+    end)
+    
+    Elements:AddSlider("silent aim(1=Head -> 6=R.Leg)", 1, 6, 6, function(numericalIndex)
+        local chosenPart = R6_BODY_PARTS[numericalIndex]
+        if chosenPart then
+            currentTargetPartName = chosenPart
+            lockedPlayer = nil 
+        end
+    end)
+    
+    Elements:AddLabel("unload script")
+    
+    Elements:AddButton("Unload", function()
+        for _, connection in ipairs(scriptConnections) do
+            if connection then connection:Disconnect() end
+        end
+        scriptConnections = {}
+        
+        if fovCircle then fovCircle:Remove() end
+        lockedPlayer = nil
+        
+        for player, box in pairs(espBoxes) do
+            if box then box:Remove() end
+        end
+        espBoxes = {}
+        
+        if targetUiGuiInstance then
+            targetUiGuiInstance:Destroy()
+            targetUiGuiInstance = nil
+        else
+            for _, child in ipairs(uiStorageParent:GetChildren()) do
+                if child:IsA("ScreenGui") and string.match(child.Name, "^CustomUILibrary_") then
+                    child:Destroy()
+                end
+            end
+        end
+        
+        print("wiped")
+    end)
+end
+
+createInterface()
