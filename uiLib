@@ -169,67 +169,54 @@ function UILibrary.CreateWindow(titleText)
         end)
     end
 
-    -- TOGGLE Component
-   function Elements:AddToggle(text, defaultState, callback)
+function Elements:AddToggle(text, defaultState, callback)
     local toggled = defaultState or false
 
-        local ToggleFrame = Instance.new("TextButton")
-        ToggleFrame.Size = UDim2.new(1, -6, 0, 35)
-        ToggleFrame.BackgroundColor3 = Color3.fromRGB(38, 38, 45)
-        ToggleFrame.AutoButtonColor = false
-        ToggleFrame.Text = ""
-        ToggleFrame.Parent = Container
+    local ToggleFrame = Instance.new("TextButton")
+    ToggleFrame.Size = UDim2.new(1, -6, 0, 35)
+    ToggleFrame.BackgroundColor3 = Color3.fromRGB(38, 38, 45)
+    ToggleFrame.AutoButtonColor = false
+    ToggleFrame.Text = ""
+    ToggleFrame.Parent = Container
 
-        local TCorner = Instance.new("UICorner")
-        TCorner.CornerRadius = UDim.new(0, 5)
-        TCorner.Parent = ToggleFrame
+    Instance.new("UICorner", ToggleFrame).CornerRadius = UDim.new(0, 5)
 
-        local ToggleLabel = Instance.new("TextLabel")
-        ToggleLabel.Size = UDim2.new(1, -50, 1, 0)
-        ToggleLabel.Position = UDim2.new(0, 12, 0, 0)
-        ToggleLabel.BackgroundTransparency = 1
-        ToggleLabel.Text = text
-        ToggleLabel.TextColor3 = Color3.fromRGB(220, 220, 225)
-        ToggleLabel.Font = Enum.Font.GothamSemibold
-        ToggleLabel.TextSize = 13
-        ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        ToggleLabel.Parent = ToggleFrame
+    local ToggleLabel = Instance.new("TextLabel", ToggleFrame)
+    ToggleLabel.Size = UDim2.new(1, -50, 1, 0)
+    ToggleLabel.Position = UDim2.new(0, 12, 0, 0)
+    ToggleLabel.BackgroundTransparency = 1
+    ToggleLabel.Text = text
+    ToggleLabel.TextColor3 = Color3.fromRGB(220, 220, 225)
+    ToggleLabel.Font = Enum.Font.GothamSemibold
+    ToggleLabel.TextSize = 13
+    ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-        local IndicatorBox = Instance.new("Frame")
-        IndicatorBox.Size = UDim2.new(0, 36, 0, 18)
-        IndicatorBox.Position = UDim2.new(1, -48, 0.5, -9)
-        IndicatorBox.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
-        IndicatorBox.Parent = ToggleFrame
+    local IndicatorBox = Instance.new("Frame", ToggleFrame)
+    IndicatorBox.Size = UDim2.new(0, 36, 0, 18)
+    IndicatorBox.Position = UDim2.new(1, -48, 0.5, -9)
+    IndicatorBox.BackgroundColor3 = toggled and Color3.fromRGB(0, 160, 255) or Color3.fromRGB(24, 24, 28)
+    Instance.new("UICorner", IndicatorBox).CornerRadius = UDim.new(1, 0)
 
-        local ICorner = Instance.new("UICorner")
-        ICorner.CornerRadius = UDim.new(1, 0)
-        ICorner.Parent = IndicatorBox
+    local SwitchNode = Instance.new("Frame", IndicatorBox)
+    SwitchNode.Size = UDim2.new(0, 14, 0, 14)
+    SwitchNode.Position = toggled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+    SwitchNode.BackgroundColor3 = toggled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(140, 140, 145)
+    Instance.new("UICorner", SwitchNode).CornerRadius = UDim.new(1, 0)
 
-        local SwitchNode = Instance.new("Frame")
-        SwitchNode.Size = UDim2.new(0, 14, 0, 14)
-        SwitchNode.Position = UDim2.new(0, 2, 0.5, -7)
-        SwitchNode.BackgroundColor3 = Color3.fromRGB(140, 140, 145)
-        SwitchNode.Parent = IndicatorBox
+    ToggleFrame.MouseButton1Down:Connect(function()
+        toggled = not toggled
+        
+        -- Calculate targets based on the NEW state
+        local targetPos = toggled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+        local targetColor = toggled and Color3.fromRGB(0, 160, 255) or Color3.fromRGB(24, 24, 28)
+        local nodeColor = toggled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(140, 140, 145)
 
-        local SCorner = Instance.new("UICorner")
-        SCorner.CornerRadius = UDim.new(1, 0)
-        SCorner.Parent = SwitchNode
-
-        ToggleFrame.MouseButton1Down:Connect(function()
-            if toggled then
-                IndicatorBox.BackgroundColor3 = Color3.fromRGB(0, 160, 255)
-                SwitchNode.Position = UDim2.new(1, -16, 0.5, -7)
-            end
-
-        ToggleFrame.MouseButton1Down:Connect(function()
-            toggled = not toggled
-
-            TweenService:Create(SwitchNode, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Position = targetPos, BackgroundColor3 = nodeColor}):Play()
-            TweenService:Create(IndicatorBox, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
-            
-            task.spawn(callback, toggled)
-        end)
-    end
+        TweenService:Create(SwitchNode, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Position = targetPos, BackgroundColor3 = nodeColor}):Play()
+        TweenService:Create(IndicatorBox, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
+        
+        task.spawn(callback, toggled)
+    end)
+end
 
     -- SLIDER Component
     function Elements:AddSlider(text, min, max, default, callback)
