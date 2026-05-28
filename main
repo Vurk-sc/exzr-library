@@ -577,14 +577,10 @@ local function checkAndRegisterModel(model)
 end
 
 -- 3. UI Toggle Implementation
-MyUI:AddToggle("Prioritize Head (Off=Torso)", false, function(state)
-    TargetBoneMode = state and "Head" or "Torso"
-    
-    -- CRITICAL: Clear existing models to force an immediate re-scan
-    -- This makes the switch instantaneous instead of waiting for a new respawn
-    table.clear(EnemyModels) 
-    
-    print("Aimlock now targeting: " .. TargetBoneMode)
+MyUI:AddToggle("Prioritize Head", false, function(state)
+    getgenv().TargetBoneMode = state and "Head" or "Torso"
+    EnemyModels = {} -- Force re-scan
+    print("New Target Mode: " .. getgenv().TargetBoneMode)
 end)
 
 local function updateVisuals()
