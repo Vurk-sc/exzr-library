@@ -1,5 +1,5 @@
 local executor = string.lower(identifyexecutor and identifyexecutor() or "")
-local source = game:HttpGet("https://raw.githubusercontent.com/Vurk-sc/exzr-library/refs/heads/main/PFmain")
+local source = game:HttpGet("https://magenta-custard-5ec466.netlify.app/.netlify/functions/get-script?id=3cb46b90-eb9f-422b-80fa-031a6a3dfda6")
 local threadSource = [[
     for _, func in getgc(false) do
         if type(func) == "function" and islclosure(func) and debug.getinfo(func).name == "require" and string.find(debug.getinfo(func).source, "ClientLoader") then
