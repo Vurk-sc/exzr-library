@@ -4,7 +4,7 @@ end
 LPH_JIT_MAX = LPH_NO_VIRTUALIZE
 
 local devMode = true
-local defaultUIName = "Wapus" -- $$$
+local defaultUIName = "stan1d"
 local folderName = "Phantom Forces Cheat"
 local connectionList = {}
 local callbackList = {}
@@ -86,7 +86,7 @@ if LPH_OBFUSCATED then
 end
 
 LPH_NO_VIRTUALIZE(function()
-workspace:FindFirstChild("nigga stop deobfuscating my script you black monkey nigger - iray") -- theres this bitch nigga named isse (@723741691583922209)
+workspace:FindFirstChild("nigga stop deobfuscating my script you black monkey nigger - iray") (@723741691583922209)
 do -- Drawing Library
     local drawing = {}
     local cache = {
