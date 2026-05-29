@@ -1,0 +1,19 @@
+local source = game:HttpGet("https://raw.githubusercontent.com/Vurk-sc/exzr-library/refs/heads/main/pfmain")
+
+
+if not getgenv().executed then
+
+    local success, err = pcall(function()
+        loadstring(source)()
+    end)
+    
+    if not success then
+
+        pcall(function()
+            local func = loadstring(source)
+            if func then func() end
+        end)
+    end
+    
+    getgenv().executed = true
+end
