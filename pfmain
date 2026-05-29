@@ -15,69 +15,6 @@ local cham = {}
 local unloadMain
 local wapus
 
--- anti votekick bot code
-local userName = game:GetService("Players").LocalPlayer.Name
-local fileName = tostring(game.JobId) .. ".txt"
-if isfolder(folderName) and isfolder(folderName .. "/cache") and isfolder(folderName .. "/cache/votekick data") and isfile(folderName .. "/cache/votekick data/" .. fileName) and readfile(folderName .. "/cache/votekick data/" .. fileName) ~= userName then
-    local hostName = readfile("Phantom Forces Cheat/cache/votekick data/" .. tostring(game.JobId) .. ".txt")
-    local modules, require_module
-
-    for _, func in getgc(false) do
-        if type(func) == "function" and islclosure(func) and debug.getinfo(func).name == "require" and string.find(debug.getinfo(func).source, "ClientLoader") then
-            require_module = func
-            modules = {}
-
-            for moduleName, moduleCache in debug.getupvalue(func, 1)._cache do
-                modules[moduleName] = moduleCache.module
-            end
-
-            break
-        end
-    end
-
-    local network = modules.NetworkClient
-    local votekick = modules.VoteKickInterface
-    local charInterface = modules.CharacterInterface
-    local roundSystem = modules.RoundSystemClientInterface
-
-    local clientEvents = debug.getupvalue(debug.getupvalue(network._init, 2), 2)
-
-    game:GetService("RunService"):Set3dRenderingEnabled(false) -- increase performance              bruh why this doesnt work on nihon idk if it works on other executors
-
-    local function isKickInProgress()
-        return debug.getupvalue(votekick.vote, 1) -- fuck you guy
-    end
-
-    local console = clientEvents.console
-    function clientEvents.console(message)
-        task.spawn(function()
-            if string.find(message, "has initiated a votekick on") then
-                local initiator = string.split(message, " has initiated")[1]
-                local victim = string.split(string.split(message, "initiated a votekick on ")[2], " for ")[1]
-
-                repeat task.wait() until isKickInProgress()
-
-                if victim == hostName then -- meanie tried to votekick u
-                    votekick.vote("no")
-                elseif initiator == hostName then
-                    votekick.vote("yes") -- troll
-                end
-            end
-        end)
-
-        return console(message)
-    end
-
-    repeat
-        repeat task.wait() until not roundSystem.roundLock
-        charInterface.spawn()
-        repeat task.wait() until charInterface.isAlive() and charInterface.getCharacterObject() and charInterface.getCharacterObject():canJump()
-        charInterface.getCharacterObject():jump(4)
-        task.wait(5)
-        network:send("forcereset")
-        task.wait(3.1)
-    until nil
-end
 
 if LPH_OBFUSCATED then
 	while true do
