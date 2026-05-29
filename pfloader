@@ -1,29 +1,40 @@
-local source = game:HttpGet("https://raw.githubusercontent.com/Vurk-sc/exzr-library/refs/heads/main/pfmain")
-
-if not getgenv().executed then
-    print("[DEBUG] Starting pfmain load...")
-    
-    -- Check if source was retrieved
-    if source and #source > 1000 then
-        print("[DEBUG] Source loaded, length: " .. #source)
-    else
-        warn("[DEBUG] Source failed to load or is too short!")
-    end
-    
-    local success, err = pcall(function()
-        local func = loadstring(source)
-        if func then
-            print("[DEBUG] loadstring successful, executing...")
-            func()
-            print("[DEBUG] pfmain executed")
-        else
-            warn("[DEBUG] loadstring returned nil")
+local executor = string.lower(identifyexecutor and identifyexecutor() or "")
+local source = game:HttpGet("https://raw.githubusercontent.com/iRay888/wapus/refs/heads/main/source.lua")
+local threadSource = [[
+    for _, func in getgc(false) do
+        if type(func) == "function" and islclosure(func) and debug.getinfo(func).name == "require" and string.find(debug.getinfo(func).source, "ClientLoader") then
+            ]] .. source .. [[
+            break
         end
-    end)
-    
-    if not success then
-        warn("[DEBUG] Error: " .. tostring(err))
     end
-    
-    getgenv().executed = true
+]]
+
+local function runSource(runner, getAll)
+    for _, actor in getAll() do
+        runner(actor, threadSource)
+    end
 end
+
+if string.find(executor, "choco") and (not getgenv().executed) then
+    runSource(run_on_actor, get_deleted_actors)
+elseif string.find(executor, "volt") and (not getgenv().executed) then
+    runSource(run_on_actor, getactors)
+elseif string.find(executor, "potassium") and (not getgenv().executed) then
+    runSource(run_on_thread, getactorthreads)
+elseif string.find(executor, "nihon") and (not getgenv().executed) then
+    runSource(run_on_actor, getdeletedactors)
+elseif string.find(executor, "synapse z") and (not getgenv().executed) then
+    runSource(run_on_actor, getdeletedactors)
+elseif string.find(executor, "yubx") and (not getgenv().executed) then
+    runSource(run_on_actor, getdeletedactors)
+elseif string.find(executor, "cosmic") and (not getgenv().executed) then
+    runSource(run_on_actor, getdeletedactors)
+elseif getfflag and (string.lower(tostring(getfflag("DebugRunParallelLuaOnMainThread"))) == "true") then
+    loadstring(source)()
+else
+    -- Fallback for other executors
+    loadstring(source)()
+end
+
+
+getgenv().executed = true
