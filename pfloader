@@ -1,18 +1,28 @@
 local source = game:HttpGet("https://raw.githubusercontent.com/Vurk-sc/exzr-library/refs/heads/main/pfmain")
 
-
 if not getgenv().executed then
-
+    print("[DEBUG] Starting pfmain load...")
+    
+    -- Check if source was retrieved
+    if source and #source > 1000 then
+        print("[DEBUG] Source loaded, length: " .. #source)
+    else
+        warn("[DEBUG] Source failed to load or is too short!")
+    end
+    
     local success, err = pcall(function()
-        loadstring(source)()
+        local func = loadstring(source)
+        if func then
+            print("[DEBUG] loadstring successful, executing...")
+            func()
+            print("[DEBUG] pfmain executed")
+        else
+            warn("[DEBUG] loadstring returned nil")
+        end
     end)
     
     if not success then
-
-        pcall(function()
-            local func = loadstring(source)
-            if func then func() end
-        end)
+        warn("[DEBUG] Error: " .. tostring(err))
     end
     
     getgenv().executed = true
