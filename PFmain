@@ -1114,23 +1114,22 @@ do -- UI Library
     local TEXTBOX = 14
     --real
 
-    wapus = {
-        toggleKeybind = "RightShift",
-        theme = {
-            accent = Color3.fromRGB(127, 72, 163), -- Color3.fromRGB(23, 122, 179)
-            text = Color3.fromRGB(255, 255, 255),
-            background = Color3.fromRGB(35, 35, 35),
-            lightbackground = Color3.fromRGB(50, 50, 50),
-            hidden = Color3.fromRGB(26, 26, 26),
-            hiddenText = Color3.fromRGB(200, 200, 200),
-            outline = Color3.fromRGB(0, 0, 0),
-            --fontData = game:HttpGet("https://get.fontspace.co/download/font/g0P4/YzVlMTg1YTgwOGNhNGQyYjljZDFiNmI0NjMxNGY0YzgudHRm/EpilepsySans-g0P4.ttf") -- miss krampus
-        },
-        menus = {},
-        useCustomFont = false,
-        open = true,
-        GetValue = function() end
-    }
+wapus = {
+    toggleKeybind = "RightShift",
+    theme = {
+        accent = Color3.fromRGB(0, 122, 255),        -- Modern iOS blue
+        text = Color3.fromRGB(255, 255, 255),        -- Pure white
+        background = Color3.fromRGB(28, 28, 30),     -- Dark modern gray
+        lightbackground = Color3.fromRGB(44, 44, 46), -- Slightly lighter
+        hidden = Color3.fromRGB(36, 36, 38),         -- Darker elements
+        hiddenText = Color3.fromRGB(142, 142, 147),  -- Subtle gray text
+        outline = Color3.fromRGB(56, 56, 60),        -- Soft borders
+    },
+    menus = {},
+    useCustomFont = false,
+    open = true,
+    GetValue = function() end
+}
 
     local hueData = "rbxassetid://18403604225"
     local valueData = "rbxassetid://18403602548"
